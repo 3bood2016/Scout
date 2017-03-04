@@ -1,0 +1,175 @@
+package eu.shotwar.listeners;
+
+import org.bukkit.Location; 
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import java.util.ArrayList;
+import java.util.List;
+
+import me.exploit.anni.anniGame.AnniPlayer;
+import me.exploit.anni.kits.KitUtils;
+import me.exploit.anni.kits.Loadout;
+import me.exploit.anni.main.AnnihilationMain;
+import me.exploit.anni.voting.ConfigManager;
+import me.exploit.kits.base.ConfigurableKit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.player.PlayerFishEvent;
+import org.bukkit.event.player.PlayerFishEvent.State;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerFishEvent;
+import org.bukkit.util.Vector;
+
+import eu.shotwar.Main;
+
+public class Grapplee implements Listener {
+	
+	Main plugin;
+	public class Scout extends ConfigurableKit
+  private ItemStack grapple;
+	private String grappleName;
+	
+	@Override
+	protected void setUp()
+	{
+		grapple = KitUtils.addSoulbound(getIcon().clone());
+		ItemMeta m = grapple.getItemMeta();
+		m.setDisplayName(grappleName);
+		grapple.setItemMeta(m);
+	}
+
+	@Override
+	protected String getInternalName()
+	{
+		return "Scout";
+	}
+
+	@Override
+	protected ItemStack getIcon()
+	{
+		return new ItemStack(Material.FISHING_ROD);
+	}
+
+	@Override
+	protected int setDefaults(ConfigurationSection section)
+	{
+		//section.set("GrappleItemName", ChatColor.AQUA+"Grapple");
+		return ConfigManager.setDefaultIfNotSet(section, "GrappleItemName", ChatColor.AQUA+"Grapple");
+	}
+	
+	@Override
+	protected void loadKitStuff(ConfigurationSection section)
+	{
+		super.loadKitStuff(section);
+		grappleName = section.getString("GrappleItemName");
+	}
+	
+	private boolean isGrappleItem(ItemStack stack)
+	{
+		if(stack != null && stack.hasItemMeta() && stack.getItemMeta().hasDisplayName())
+		{
+			String name = stack.getItemMeta().getDisplayName();
+			if(name.contains(this.grappleName) && KitUtils.isSoulbound(stack))
+				return true;
+		}
+		return false;
+	}	
+
+	@Override
+	protected List<String> getDefaultDescription()
+	{
+		List<String> l = new ArrayList<String>();
+		addToList(l,
+					aqua+"You are the feet.",
+					"",
+					aqua+"Use your permanent speed",
+					aqua+"boost to maneuver around",
+					aqua+"the battlefield, and your",
+					aqua+"grapple to ascend to new",
+					aqua+"heights and gain perspective",
+					aqua+"on the battlefield."
+				);
+		return l;
+    @EventHandler(priority = EventPriority.NORMAL)
+	public void fallDamage(EntityDamageEvent event)
+	{
+		if(event.getEntity().getType() == EntityType.PLAYER && event.getCause() == DamageCause.FALL)
+		{
+			Player p = (Player)event.getEntity();
+			AnniPlayer pl = AnniPlayer.getPlayer(p.getUniqueId());
+			if(pl != null && pl.getKit().equals(this))
+			{
+				event.setDamage(event.getDamage()/4);
+	
+	@EventHandler
+    public void onScoutGrapple(PlayerFishEvent e) {
+        Player player = e.getPlayer();
+        player.getItemInHand().setDurability((short) -10);
+        
+        if (!(player.getItemInHand().getType() == Material.FISHING_ROD))
+            return;
+
+        Location hookLoc = e.getHook().getLocation();
+        Location playerLoc = player.getLocation();
+
+        double hookX = (int) hookLoc.getX();
+        double hookY = (int) hookLoc.getY();
+        double hookZ = (int) hookLoc.getZ();
+
+        Material inType = hookLoc.getWorld().getBlockAt(hookLoc).getType();
+        if (inType == Material.AIR || inType == Material.WATER
+                || inType == Material.LAVA)|| inType == Material.Ladder) {
+            Material belowType = hookLoc.getWorld()
+                    .getBlockAt((int) hookX, (int) (hookY - 0.1), (int) hookZ)
+                    .getType();
+            if (belowType == Material.AIR || inType == Material.WATER
+                    || inType == Material.LAVA)
+                return;
+        }
+
+        playerLoc.setY(playerLoc.getY() + 0.5);
+        player.teleport(playerLoc);
+
+        Vector diff = hookLoc.toVector().subtract(playerLoc.toVector());
+        Vector vel = new Vector();
+        double d = hookLoc.distance(playerLoc);
+        vel.setX((1.0 + 0.07 * d) * diff.getX() / d);
+        vel.setY((1.0 + 0.03 * d) * diff.getY() / d + 0.04 * d);
+        vel.setZ((1.0 + 0.07 * d) * diff.getZ() / d);
+        player.setVelocity(vel);
+        player.playSound(player.getLocation(), Sound.HORSE_ARMOR, 5.0F, 10.0F);
+         
+       @Override
+	protected Loadout getFinalLoadout()
+	{
+		return new Loadout().addGoldSword().addWoodPick().addWoodAxe().addItem(this.grapple);
+	}
+
+	@EventHandler
+	public void onPlayerRespawn(PlayerRespawnEvent e){
+		final Player p = e.getPlayer();
+		AnniPlayer aP = AnniPlayer.getPlayer(p.getUniqueId());
+		if(aP.getKit().equals(this)){
+			AnnihilationMain.getInstance().getServer().getScheduler().runTask(AnnihilationMain.getInstance(), new Runnable(){
+				public void run(){
+					p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0));
+     
+    }
+}
